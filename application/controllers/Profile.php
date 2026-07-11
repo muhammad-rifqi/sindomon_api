@@ -13,6 +13,6 @@ class Profile extends CI_Controller {
 
     public function index()
     {
-       
+              // pake $this->db->query("") aja. soalnya ini bakalan banyak query complex. 
     }
 }
