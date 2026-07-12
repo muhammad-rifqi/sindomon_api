@@ -20,7 +20,7 @@ class Role extends CI_Controller {
         $this->load->library('session');
         $this->load->helper('uuid');
         $this->load->helper('string');
-        
+
     }
 
     public function index()
@@ -45,8 +45,8 @@ class Role extends CI_Controller {
     public function post()
     {
         $headers = $this->input->request_headers();
-        $authorization = $headers['Authorization'];
-        if($authorization != null){
+        if(isset($headers['Authorization'])){
+            $authorization = $headers['Authorization'];
             $rows = json_decode($this->input->raw_input_stream, true);
             $data = $this->db->query("insert into tbl_role(roles,created_at)values('".$rows['role']."','".date('Y-m-d : H:i:s')."')");
             if($data){
@@ -61,7 +61,19 @@ class Role extends CI_Controller {
 
     public function put()
     {
-        echo "PUT";
+        $headers = $this->input->request_headers();
+        if(isset($headers['Authorization'])){
+            $authorization = $headers['Authorization'];
+            $rows = json_decode($this->input->raw_input_stream, true);
+            $data = $this->db->query("update tbl_role set roles = '".$rows['role']."' where id = '".$rows['id']."'");
+            if($data){
+                echo json_encode(array("message"=> "success", "status" => 200 , "data" => $rows));
+            }else{
+                echo json_encode(array("message"=> "failed", "status" => 400 , "data" => []));
+            }
+        }else{
+            echo json_encode("Unauthorize");
+        }
     }
 
     public function delete()
