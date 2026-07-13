@@ -32,8 +32,8 @@ class Role extends CI_Controller {
     {
 
         $headers = $this->input->request_headers();
-        $authorization = $headers['Authorization'];
-        if($authorization != null){
+        if($headers != null){
+            $authorization = $headers['Authorization'];
             $data = $this->db->query("select * from tbl_role")->result_array();
             echo json_encode(array("message"=> "success", "status" => 200 , "data" => $data));
         }else{

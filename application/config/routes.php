@@ -59,6 +59,7 @@ $route['api/v1/role']['get']    = 'role/get';
 $route['api/v1/role']['post']   = 'role/post';
 $route['api/v1/role']['put']    = 'role/put';
 $route['api/v1/role']['delete'] = 'role/delete';
-
+//Profile
+$route['api/v1/profile']['get']    = 'profile/get';
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
