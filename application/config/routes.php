@@ -66,6 +66,9 @@ $route['api/v1/pengaduan/tiket']['GET'] = 'pengaduan/tiket';
 $route['api/v1/pengaduan/tiket/(:num)/status']['PATCH'] = 'pengaduan/ubah_status/$1';
 
 $route['api/v1/knowledge/dokumen']['GET'] = 'knowledge/dokumen';
+$route['api/v1/kamtibmas/laporan']['POST'] = 'kamtibmas/laporan';
+$route['api/v1/dms/surat']['POST'] = 'dms/surat';
+$route['api/v1/dms/surat']['GET'] = 'dms/inbox_outbox';
 
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
