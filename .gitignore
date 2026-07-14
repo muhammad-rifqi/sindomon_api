@@ -30,3 +30,8 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 *.sublime-project
 /tests/tests/
 /tests/results/
+
+# SINDOMON Local Configs & Environment
+application/config/config.php
+application/config/database.php
+.htaccess

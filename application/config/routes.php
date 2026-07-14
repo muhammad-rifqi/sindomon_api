@@ -61,5 +61,11 @@ $route['api/v1/role']['put']    = 'role/put';
 $route['api/v1/role']['delete'] = 'role/delete';
 //Profile
 $route['api/v1/profile']['get']    = 'profile/get';
+// Pengaduan
+$route['api/v1/pengaduan/tiket']['GET'] = 'pengaduan/tiket';
+$route['api/v1/pengaduan/tiket/(:num)/status']['PATCH'] = 'pengaduan/ubah_status/$1';
+
+$route['api/v1/knowledge/dokumen']['GET'] = 'knowledge/dokumen';
+
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
