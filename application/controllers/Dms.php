@@ -274,4 +274,149 @@ class Dms extends CI_Controller {
             "data" => $results
         ));
     }
+
+    /**
+     * GET /api/v1/dms/surat/{surat_id}/download
+     * Tarik File Dokumen Terproteksi (Secure Fetch)
+     *
+     * Authorization: Valid JWT + Dual-Jurisdiction (polda_id == pengirim OR penerima)
+     * Response: Binary stream (pdf/docx) — NOT JSON
+     */
+    public function download($surat_id)
+    {
+        // ── 1. AUTH: Smart JWT extraction ──
+        $payload = get_jwt_payload($this);
+        if (!$payload) {
+            $this->output->set_status_header(401);
+            echo json_encode(array(
+                "message" => "Token tidak ditemukan",
+                "status" => 401,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        // ── 2. EXTRACT polda_id FROM JWT (0 = Mabes) ──
+        $polda_id = isset($payload['polda_id']) ? (int) $payload['polda_id'] : 0;
+
+        // ── 3. FETCH DOCUMENT RECORD ──
+        $sql = "SELECT * FROM tbl_dms_surat WHERE surat_id = '"
+            . $this->db->escape_str($surat_id) . "'";
+        $query = $this->db->query($sql);
+        $doc = $query->row_array();
+
+        if (!$doc) {
+            $this->output->set_status_header(404);
+            echo json_encode(array(
+                "message" => "Surat tidak ditemukan",
+                "status" => 404,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        // ── 4. DUAL-JURISDICTION AUTHORIZATION ──
+        $pengirim = ($doc['pengirim_polda_id'] !== null)
+            ? (int) $doc['pengirim_polda_id'] : 0;
+        $penerima = ($doc['penerima_polda_id'] !== null)
+            ? (int) $doc['penerima_polda_id'] : 0;
+
+        $is_authorized = ($polda_id === $pengirim) || ($polda_id === $penerima);
+
+        if (!$is_authorized) {
+            $this->output->set_status_header(403);
+            echo json_encode(array(
+                "message" => "Akses ditolak. Anda tidak memiliki izin mengunduh surat ini",
+                "status" => 403,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        // ── 5. VERIFY PHYSICAL FILE ──
+        $file_path = FCPATH . $doc['file_pdf_url'];
+
+        if (!file_exists($file_path)) {
+            $this->output->set_status_header(404);
+            echo json_encode(array(
+                "message" => "File tidak ditemukan di server",
+                "status" => 404,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        // ── 6. DETECT MIME & FILENAME ──
+        $mime = mime_content_type($file_path);
+        if (!$mime || strpos($mime, '/') === false) {
+            $mime = 'application/octet-stream';
+        }
+        $filename = basename($doc['file_pdf_url']);
+
+        // ── 7. CLEAN BUFFER + STREAM BINARY (Flutter-compatible) ──
+        ob_clean();
+        flush();
+
+        header('Content-Type: ' . $mime);
+        header('Content-Length: ' . filesize($file_path));
+        header('Content-Disposition: inline; filename="' . $filename . '"');
+        header('Cache-Control: no-store, no-cache, must-revalidate');
+
+        readfile($file_path);
+        exit;
+    }
+
+    /**
+     * PATCH /api/v1/dms/surat/{surat_id}/read
+     * Tandai Surat Dibaca (Read Receipt)
+     *
+     * Authorization: Penerima surat only (penerima_polda_id == JWT polda_id)
+     */
+    public function read($surat_id)
+    {
+        // ── 1. AUTH: Smart JWT extraction ──
+        $payload = get_jwt_payload($this);
+        if (!$payload) {
+            $this->output->set_status_header(401);
+            echo json_encode(array(
+                "message" => "Token tidak ditemukan",
+                "status" => 401,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        // ── 2. EXTRACT polda_id FROM JWT (0 = Mabes) ──
+        $polda_id = isset($payload['polda_id']) ? (int) $payload['polda_id'] : 0;
+
+        // ── 3. UPDATE status_tracking → 'Dibaca' (penerima-only gate) ──
+        // Handle Mabes edge-case: penerima_polda_id IS NULL in DB → JWT polda_id=0
+        $sql = "UPDATE tbl_dms_surat
+                SET status_tracking = 'Dibaca'
+                WHERE surat_id = '" . $this->db->escape_str($surat_id) . "'
+                  AND (
+                      penerima_polda_id = '" . $this->db->escape_str($polda_id) . "'
+                      OR (penerima_polda_id IS NULL AND " . $polda_id . " = 0)
+                  )";
+
+        $this->db->query($sql);
+
+        if ($this->db->affected_rows() === 0) {
+            $this->output->set_status_header(403);
+            echo json_encode(array(
+                "message" => "Akses ditolak atau surat tidak ditemukan",
+                "status" => 403,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        // ── 4. SUCCESS ──
+        $this->output->set_status_header(200);
+        echo json_encode(array(
+            "message" => "Status pelacakan berhasil diubah menjadi Dibaca",
+            "status" => 200,
+            "data" => new stdClass()
+        ));
+    }
 }
