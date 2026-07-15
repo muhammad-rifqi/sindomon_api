@@ -20,6 +20,7 @@ class Knowledge extends CI_Controller {
         $this->load->library('session');
         $this->load->helper('uuid');
         $this->load->helper('string');
+        $this->load->helper('jwt');
         $this->load->library('jwt');
     }
 
@@ -31,17 +32,8 @@ class Knowledge extends CI_Controller {
      */
     public function dokumen()
     {
-        // ── 1. AUTH: Extract + decode JWT ──
-        $headers = $this->input->request_headers();
-        if (!isset($headers['Authorization'])) {
-            $this->output->set_status_header(401);
-            echo json_encode(array("message" => "Unauthorized", "status" => 401, "data" => array()));
-            return;
-        }
-
-        $token = str_replace("Bearer ", "", $headers['Authorization']);
-        $payload = $this->jwt->decode($token);
-
+        // ── 1. AUTH: Smart JWT extraction (Bearer or raw token) ──
+        $payload = get_jwt_payload($this);
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array("message" => "Token tidak valid", "status" => 401, "data" => array()));

@@ -32,6 +32,6 @@ user_guide_src/cilexer/pycilexer.egg-info/*
 /tests/results/
 
 # SINDOMON Local Configs & Environment
-application/config/config.php
-application/config/database.php
-.htaccess
+#application/config/config.php
+#application/config/database.php
+#.htaccess
