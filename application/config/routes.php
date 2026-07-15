@@ -71,6 +71,15 @@ $route['api/v1/knowledge/dokumen']['GET'] = 'knowledge/dokumen';
 $route['api/v1/kamtibmas/laporan']['POST'] = 'kamtibmas/laporan';
 $route['api/v1/dms/surat']['POST'] = 'dms/surat';
 $route['api/v1/dms/surat']['GET'] = 'dms/inbox_outbox';
+$route['api/v1/dms/surat/(:any)/download']['GET'] = 'dms/download/$1';
+$route['api/v1/dms/surat/(:any)/read']['PATCH'] = 'dms/read/$1';
+$route['api/v1/logistik/senjata']['POST'] = 'logistik/senjata_post';
+$route['api/v1/logistik/amunisi']['POST'] = 'logistik/amunisi_post';
+$route['api/v1/logistik/amunisi']['GET'] = 'logistik/amunisi_get';
+$route['api/v1/logistik/satwa']['POST'] = 'logistik/satwa_post';
+// SDM
+$route['api/v1/sdm/org-tree']['GET'] = 'sdm/org_tree_get';
+$route['api/v1/sdm/personil']['GET'] = 'sdm/personil_get';
 
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;

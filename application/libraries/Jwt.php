@@ -12,6 +12,7 @@ class Jwt {
     public function __construct()
     {
         $this->load =& get_instance();
+        $this->load->config->load('jwt');
         $this->secret = $this->load->config->item('jwt_secret');
     }
 

@@ -11,13 +11,21 @@ defined('BASEPATH') OR exit('No direct script access allowed');
  * @param CI_Controller $ci  The controller instance ($this)
  * @return array|null        Decoded payload, or null if token missing/invalid
  */
+if (!function_exists('get_jwt_payload')) {
 function get_jwt_payload($ci) {
-    $headers = $ci->input->request_headers();
-    if (!isset($headers['Authorization'])) {
-        return null;
+    // Bypass CI3 input class — unreliable under php built-in server.
+    // getallheaders() works in CLI server mode since PHP 5.4.
+    $all_headers = function_exists('getallheaders') ? getallheaders() : [];
+    $auth = isset($all_headers['Authorization'])
+        ? $all_headers['Authorization']
+        : (isset($_SERVER['HTTP_AUTHORIZATION']) ? $_SERVER['HTTP_AUTHORIZATION'] : null);
+    if ($auth === null && isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+        $auth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
     }
 
-    $auth = $headers['Authorization'];
+    if ($auth === null) {
+        return null;
+    }
 
     // Strip "Bearer " prefix if present; otherwise treat entire string as raw token
     if (substr($auth, 0, 7) === 'Bearer ') {
@@ -27,6 +35,7 @@ function get_jwt_payload($ci) {
     }
 
     return $ci->jwt->decode($token) ?: null;
+}
 }
 if (!function_exists('base64url_encode')) {
     function base64url_encode($data)

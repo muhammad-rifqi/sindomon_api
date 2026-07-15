@@ -1,0 +1,20 @@
+[
+    {
+        "username": "admin_pusat",
+        "password": "admin123",
+        "role_id": 1,
+        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjE3LCJ1c2VybmFtZSI6ImFkbWluX3B1c2F0Iiwicm9sZV9pZCI6MSwiaWF0IjoxNzg0MTA4MzEyLCJleHAiOjE4MTU2NDQzMTJ9.GYGaiPK5vdM6TLczWHbMOF8pi4fTStCeg_lIuOzTLmY"
+    },
+    {
+        "username": "operator_jabar",
+        "password": "operator123",
+        "role_id": 2,
+        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjE4LCJ1c2VybmFtZSI6Im9wZXJhdG9yX2phYmFyIiwicm9sZV9pZCI6MiwiaWF0IjoxNzg0MTA4MzEyLCJleHAiOjE4MTU2NDQzMTJ9.fP0NZUGEXbmiPmYvTBOxG9WYVXjXKrPGRgGOK3ouxOE"
+    },
+    {
+        "username": "pimpinan_mabes",
+        "password": "pimpinan123",
+        "role_id": 3,
+        "jwt": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjE5LCJ1c2VybmFtZSI6InBpbXBpbmFuX21hYmVzIiwicm9sZV9pZCI6MywiaWF0IjoxNzg0MTA4MzEyLCJleHAiOjE4MTU2NDQzMTJ9.uCbw-Iyy-p4qNA5_-RAEhlq8078jjRxWRcnReeMaSdY"
+    }
+]
