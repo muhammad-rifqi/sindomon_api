@@ -28,7 +28,7 @@ class Role extends CI_Controller {
     public function index()
     {
         // indexing
-    }
+    } 
 
      public function get()
     {
