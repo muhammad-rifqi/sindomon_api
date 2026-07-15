@@ -16,7 +16,7 @@
 
 
 -- Dumping database structure for sindomondb
-CREATE DATABASE IF NOT EXISTS `sindomondb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */;
+CREATE DATABASE IF NOT EXISTS `sindomondb` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci */;
 USE `sindomondb`;
 
 -- Dumping structure for table sindomondb.tbl_dokumen_hukum
@@ -27,7 +27,7 @@ CREATE TABLE IF NOT EXISTS `tbl_dokumen_hukum` (
   `file_url` varchar(500) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`dokumen_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table sindomondb.tbl_dokumen_hukum: ~5 rows (approximately)
 INSERT INTO `tbl_dokumen_hukum` (`dokumen_id`, `kategori`, `judul_dokumen`, `file_url`, `created_at`) VALUES
@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS `tbl_hub_pengaduan` (
   `created_at` timestamp NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`pengaduan_id`),
   KEY `idx_polda_id` (`polda_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table sindomondb.tbl_hub_pengaduan: ~3 rows (approximately)
 INSERT INTO `tbl_hub_pengaduan` (`pengaduan_id`, `polda_id`, `sumber`, `deskripsi`, `status`, `created_at`) VALUES
@@ -61,7 +61,7 @@ CREATE TABLE IF NOT EXISTS `tbl_role` (
   `roles` varchar(100) NOT NULL,
   `created_at` datetime NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table sindomondb.tbl_role: ~2 rows (approximately)
 INSERT INTO `tbl_role` (`id`, `roles`, `created_at`) VALUES
@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS `tbl_users` (
   `expired` varchar(50) DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT current_timestamp(),
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- Dumping data for table sindomondb.tbl_users: ~1 rows (approximately)
 INSERT INTO `tbl_users` (`id`, `username`, `password`, `roles_id`, `uuid`, `token`, `expired`, `created_at`) VALUES
