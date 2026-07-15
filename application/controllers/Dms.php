@@ -20,43 +20,32 @@ class Dms extends CI_Controller {
         $this->load->library('session');
         $this->load->helper('uuid');
         $this->load->helper('string');
+        $this->load->helper('jwt');
+        $this->load->helper('base64_file');
         $this->load->library('jwt');
     }
 
     /**
      * POST /api/v1/dms/surat
-     * Kirim Surat Dinas Baru [Multipart]
+     * Kirim Surat Dinas Baru [JSON + Base64]
      *
      * Authorization: Super Admin (role_id=2) or Operator Polda (role_id=3)
-     * Content-Type: multipart/form-data
+     * Content-Type: application/json
      *
-     * Form fields:
+     * JSON fields:
      *   - nomor_surat        (string, required)
      *   - judul_surat         (string, required)
      *   - penerima_polda_id   (integer, optional — null/0 = Mabes Polri)
-     *   - file_dokumen        (file, required — .pdf or .docx only)
+     *   - file_dokumen        (string, required — base64-encoded pdf/docx)
      */
     public function surat()
     {
-        // ── 1. AUTH: JWT Bearer Token ──
-        $headers = $this->input->request_headers();
-        if (!isset($headers['Authorization'])) {
-            $this->output->set_status_header(401);
-            echo json_encode(array(
-                "message" => "Token tidak ditemukan",
-                "status" => 401,
-                "data" => new stdClass()
-            ));
-            return;
-        }
-
-        $token = str_replace("Bearer ", "", $headers['Authorization']);
-        $payload = $this->jwt->decode($token);
-
+        // ── 1. AUTH: Smart JWT extraction (Bearer or raw token) ──
+        $payload = get_jwt_payload($this);
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array(
-                "message" => "Token tidak valid atau kadaluarsa",
+                "message" => "Token tidak ditemukan",
                 "status" => 401,
                 "data" => new stdClass()
             ));
@@ -75,9 +64,21 @@ class Dms extends CI_Controller {
             return;
         }
 
-        // ── 3. VALIDATE FORM FIELDS ──
-        $nomor_surat = $this->input->post('nomor_surat');
-        $judul_surat = $this->input->post('judul_surat');
+        // ── 3. PARSE JSON BODY ──
+        $input = json_decode($this->input->raw_input_stream, true);
+        if (empty($input)) {
+            $this->output->set_status_header(400);
+            echo json_encode(array(
+                "message" => "Request body harus berupa JSON",
+                "status" => 400,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        // ── 4. VALIDATE FORM FIELDS ──
+        $nomor_surat = isset($input['nomor_surat']) ? $input['nomor_surat'] : null;
+        $judul_surat = isset($input['judul_surat']) ? $input['judul_surat'] : null;
 
         if ($nomor_surat === null || $nomor_surat === '') {
             $this->output->set_status_header(400);
@@ -99,63 +100,51 @@ class Dms extends CI_Controller {
             return;
         }
 
-        // ── 4. HANDLE penerima_polda_id (Optional — null/0 = Mabes Polri) ──
-        $raw_penerima = $this->input->post('penerima_polda_id');
+        // ── 5. HANDLE penerima_polda_id (Optional — null/0 = Mabes Polri) ──
+        $raw_penerima = isset($input['penerima_polda_id']) ? $input['penerima_polda_id'] : null;
         $penerima_polda_id = null;
 
         if ($raw_penerima !== null && $raw_penerima !== '' && (int) $raw_penerima > 0) {
             $penerima_polda_id = (int) $raw_penerima;
         }
 
-        // ── 5. FILE UPLOAD: file_dokumen (pdf/docx only) ──
-        $upload_dir = dirname(FCPATH) . '/uploads/dms/';
-        if (!is_dir($upload_dir)) {
-            mkdir($upload_dir, 0755, true);
-        }
+        // ── 6. BASE64 FILE: file_dokumen (pdf/docx only) ──
+        $base64_file = isset($input['file_dokumen']) ? $input['file_dokumen'] : null;
 
-        $config = array();
-        $config['upload_path']   = $upload_dir;
-        $config['allowed_types'] = 'pdf|docx';
-        $config['max_size']      = 2048; // KB ~ 2MB
-        $config['encrypt_name']  = TRUE;
-
-        $this->load->library('upload', $config);
-
-        if (!$this->upload->do_upload('file_dokumen')) {
-            $upload_error = $this->upload->display_errors('', '');
-            $is_filetype_error = (
-                stripos($upload_error, 'filetype') !== false ||
-                stripos($upload_error, 'allowed') !== false
-            );
-
-            if ($is_filetype_error) {
-                $this->output->set_status_header(415);
-                echo json_encode(array(
-                    "message" => "Format file tidak didukung. Harap unggah PDF atau Docx.",
-                    "status" => 415,
-                    "data" => new stdClass()
-                ));
-            } else {
-                $this->output->set_status_header(400);
-                echo json_encode(array(
-                    "message" => "Gagal upload dokumen: " . $upload_error,
-                    "status" => 400,
-                    "data" => new stdClass()
-                ));
-            }
+        if ($base64_file === null || $base64_file === '') {
+            $this->output->set_status_header(400);
+            echo json_encode(array(
+                "message" => "file_dokumen wajib diisi",
+                "status" => 400,
+                "data" => new stdClass()
+            ));
             return;
         }
 
-        $upload_data = $this->upload->data();
-        $file_pdf_url = 'uploads/dms/' . $upload_data['file_name'];
+        $upload_dir = dirname(FCPATH) . '/uploads/dms/';
+        $allowed_mimes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+        $result = save_base64_file($base64_file, $upload_dir, $allowed_mimes, 2097152);
 
-        // ── 6. AUTO-INJECT pengirim_polda_id FROM JWT ──
+        if (!$result['success']) {
+            $status = isset($result['status']) ? $result['status'] : 400;
+            $this->output->set_status_header($status);
+            echo json_encode(array(
+                "message" => $result['error'],
+                "status" => $status,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $file_pdf_url = 'uploads/dms/' . $result['file_name'];
+
+        // ── 7. AUTO-INJECT pengirim_polda_id FROM JWT ──
         $pengirim_polda_id = isset($payload['polda_id']) ? (int) $payload['polda_id'] : null;
 
-        // ── 7. GENERATE UUID ──
+        // ── 8. GENERATE UUID ──
         $surat_id = generate_uuid4();
 
-        // ── 8. INSERT INTO tbl_dms_surat ──
+        // ── 9. INSERT INTO tbl_dms_surat ──
         $sql = "INSERT INTO tbl_dms_surat (surat_id, pengirim_polda_id, penerima_polda_id, judul_surat, nomor_surat, file_pdf_url, status_tracking, created_at) "
              . "VALUES ("
              . "'" . $this->db->escape_str($surat_id) . "', "
@@ -171,8 +160,8 @@ class Dms extends CI_Controller {
         $insert = $this->db->query($sql);
 
         if (!$insert) {
-            // Rollback: delete uploaded file
-            @unlink($upload_data['full_path']);
+            // Rollback: delete saved file
+            @unlink($result['file_path']);
             $this->output->set_status_header(500);
             echo json_encode(array(
                 "message" => "Gagal menyimpan surat dinas",
@@ -182,7 +171,7 @@ class Dms extends CI_Controller {
             return;
         }
 
-        // ── 9. SUCCESS RESPONSE: HTTP 201 Created ──
+        // ── 10. SUCCESS RESPONSE: HTTP 201 Created ──
         $this->output->set_status_header(201);
         echo json_encode(array(
             "message" => "Surat dinas berhasil dikirim",
@@ -203,25 +192,12 @@ class Dms extends CI_Controller {
      */
     public function inbox_outbox()
     {
-        // ── 1. AUTH: JWT Bearer Token ──
-        $headers = $this->input->request_headers();
-        if (!isset($headers['Authorization'])) {
-            $this->output->set_status_header(401);
-            echo json_encode(array(
-                "message" => "Token tidak ditemukan",
-                "status" => 401,
-                "data" => new stdClass()
-            ));
-            return;
-        }
-
-        $token = str_replace("Bearer ", "", $headers['Authorization']);
-        $payload = $this->jwt->decode($token);
-
+        // ── 1. AUTH: Smart JWT extraction (Bearer or raw token) ──
+        $payload = get_jwt_payload($this);
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array(
-                "message" => "Token tidak valid atau kadaluarsa",
+                "message" => "Token tidak ditemukan",
                 "status" => 401,
                 "data" => new stdClass()
             ));
@@ -258,7 +234,6 @@ class Dms extends CI_Controller {
 
         // ── 5. BUILD QUERY ──
         if ($tipe === 'inbox') {
-            // Inbox: surat yang ditujukan ke user ini
             $select_cols = "s.surat_id, s.nomor_surat, s.judul_surat, "
                          . "COALESCE(p.nama_polda, 'Mabes Polri') AS pengirim, "
                          . "s.status_tracking, s.created_at";
@@ -270,7 +245,6 @@ class Dms extends CI_Controller {
                 $where = "s.penerima_polda_id = '" . $this->db->escape_str($polda_id) . "'";
             }
         } else {
-            // Outbox: surat yang dikirim oleh user ini
             $select_cols = "s.surat_id, s.nomor_surat, s.judul_surat, "
                          . "COALESCE(p.nama_polda, 'Mabes Polri') AS penerima, "
                          . "s.status_tracking, s.created_at";
