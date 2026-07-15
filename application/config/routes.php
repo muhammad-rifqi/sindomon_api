@@ -61,6 +61,8 @@ $route['api/v1/role']['put']    = 'role/put';
 $route['api/v1/role']['delete'] = 'role/delete';
 //Profile
 $route['api/v1/profile']['get']    = 'profile/get';
+//polda
+$route['api/v1/polda']['get']    = 'polda/get';
 // Pengaduan
 $route['api/v1/pengaduan/tiket']['GET'] = 'pengaduan/tiket';
 $route['api/v1/pengaduan/tiket/(:num)/status']['PATCH'] = 'pengaduan/ubah_status/$1';
