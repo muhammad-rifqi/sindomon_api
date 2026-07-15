@@ -5,10 +5,12 @@ class Auth extends CI_Controller {
 
     public function __construct() {
         parent::__construct();
+        $this->config->load('jwt');
         $this->load->helper('url');
         $this->load->library('session');
         $this->load->helper('uuid');
         $this->load->helper('string');
+        $this->load->helper('jwt');
     }
 
     public function login() 
@@ -18,9 +20,17 @@ class Auth extends CI_Controller {
             $sql = $this->db->query("select * from tbl_users where username = '".$data['username']."'");
             if($sql->num_rows() > 0){
                 $check = $sql->result_array();
+                $payload = [
+                                'uid' => $check[0]['id'],
+                                'username' => $check[0]['username'],
+                                'role' => $check[0]['roles_id'],
+                                'iat' => time(),
+                                'exp' => time() + 3600
+                            ];
+                $token = jwt_encode($payload);
                 $match = password_verify($data['password'], $check[0]['password']);
                 if($match){
-                    echo json_encode(array("status" => 200, "message" => "success", "data" => $check));
+                    echo json_encode(array("status" => 200, "message" => "success", "jwt_token" => $token, "data" => $check));
                 }else{
                     echo json_encode(array("status" => 400, "message" => "password not match", "data" => []));
                 }
