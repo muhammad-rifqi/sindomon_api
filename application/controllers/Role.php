@@ -16,6 +16,8 @@ class Role extends CI_Controller {
             exit();
         }
 
+        $this->config->load('jwt');
+        $this->load->helper('jwt');
         $this->load->helper('url');
         $this->load->library('session');
         $this->load->helper('uuid');
@@ -30,16 +32,20 @@ class Role extends CI_Controller {
 
      public function get()
     {
-
         $headers = $this->input->request_headers();
-        if($headers != null){
+        if(isset($headers['Authorization'])){
             $authorization = $headers['Authorization'];
-            $data = $this->db->query("select * from tbl_role")->result_array();
-            echo json_encode(array("message"=> "success", "status" => 200 , "data" => $data));
+            $payload = jwt_decode($authorization);
+             if ($payload === false) {
+                echo json_encode("Unauthorize");
+             } else {
+                // echo $payload['username'];
+                $data = $this->db->query("select * from tbl_role")->result_array();
+                echo json_encode(array("message"=> "success", "status" => 200 , "data" => $data));
+             }
         }else{
             echo json_encode("Unauthorize");
         }
-
     }
 
     public function post()
