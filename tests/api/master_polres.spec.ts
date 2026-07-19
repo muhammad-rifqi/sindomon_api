@@ -30,9 +30,9 @@ test.describe.serial('Master Polres API', () => {
     expect(res.status()).toBe(200);
 
     const body = await res.json();
-    expect(body).toHaveProperty('jwt_token');
+    expect(body.data).toHaveProperty('jwt_token');
     assertEnvelope(body, '/auth/login (admin)');
-    adminJwt = body.jwt_token;
+    adminJwt = body.data.jwt_token;
   });
 
   test('Auth: Operator login returns role_id=2', async ({ request }) => {
@@ -44,8 +44,8 @@ test.describe.serial('Master Polres API', () => {
     expect(res.status()).toBe(200);
 
     const body = await res.json();
-    expect(body).toHaveProperty('jwt_token');
-    operatorJwt = body.jwt_token;
+    expect(body.data).toHaveProperty('jwt_token');
+    operatorJwt = body.data.jwt_token;
   });
 
   test('POST /api/v1/master/polres — Success (201)', async ({ request }) => {

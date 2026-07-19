@@ -37,14 +37,16 @@ class Role extends CI_Controller {
             $authorization = $headers['Authorization'];
             $payload = jwt_decode($authorization);
              if ($payload === false) {
-                echo json_encode("Unauthorize");
+                http_response_code(401);
+                echo json_encode(array("status" => 401, "message" => "Unauthorized", "data" => (object)[]));
              } else {
                 // echo $payload['username'];
                 $data = $this->db->query("select * from tbl_role")->result_array();
                 echo json_encode(array("message"=> "success", "status" => 200 , "data" => $data));
              }
         }else{
-            echo json_encode("Unauthorize");
+            http_response_code(401);
+            echo json_encode(array("status" => 401, "message" => "Unauthorized", "data" => (object)[]));
         }
     }
 
@@ -58,10 +60,11 @@ class Role extends CI_Controller {
             if($data){
                 echo json_encode(array("message"=> "success", "status" => 200 , "data" => $rows));
             }else{
-                echo json_encode(array("message"=> "failed", "status" => 400 , "data" => []));
+                echo json_encode(array("message"=> "failed", "status" => 400 , "data" => (object)[]));
             }
         }else{
-            echo json_encode("Unauthorize");
+            http_response_code(401);
+            echo json_encode(array("status" => 401, "message" => "Unauthorized", "data" => (object)[]));
         }
     }
 
@@ -75,16 +78,17 @@ class Role extends CI_Controller {
             if($data){
                 echo json_encode(array("message"=> "success", "status" => 200 , "data" => $rows));
             }else{
-                echo json_encode(array("message"=> "failed", "status" => 400 , "data" => []));
+                echo json_encode(array("message"=> "failed", "status" => 400 , "data" => (object)[]));
             }
         }else{
-            echo json_encode("Unauthorize");
+            http_response_code(401);
+            echo json_encode(array("status" => 401, "message" => "Unauthorized", "data" => (object)[]));
         }
     }
 
     public function delete()
     {
-        echo "DELETE";
+        echo json_encode(array("status" => 200, "message" => "success", "data" => (object)[]));
     }
 
 

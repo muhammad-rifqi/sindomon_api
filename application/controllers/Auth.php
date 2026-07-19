@@ -31,13 +31,13 @@ class Auth extends CI_Controller {
                 $token = jwt_encode($payload);
                 $match = password_verify($data['password'], $check[0]['password']);
                 if($match){
-                    echo json_encode(array("status" => 200, "message" => "success", "jwt_token" => $token, "data" => $check));
+                    echo json_encode(array("status" => 200, "message" => "success", "data" => array("jwt_token" => $token, "user" => $check)));
                 }else{
-                    echo json_encode(array("status" => 400, "message" => "password not match", "data" => []));
+                    echo json_encode(array("status" => 400, "message" => "password not match", "data" => (object)[]));
                 }
             }
         } else {
-            echo json_encode(array("status" => 400, "message" => "failed", "data" => []));
+            echo json_encode(array("status" => 400, "message" => "failed", "data" => (object)[]));
         }
     }
 
@@ -50,7 +50,7 @@ class Auth extends CI_Controller {
         if($rows){
             echo json_encode(array("status" => 200, "message" => "success", "data" => $data));
         }else{
-            echo json_encode(array("status" => 400, "message" => "failed", "data" => []));
+            echo json_encode(array("status" => 400, "message" => "failed", "data" => (object)[]));
         }
     }
 

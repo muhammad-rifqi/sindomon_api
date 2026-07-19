@@ -49,10 +49,10 @@ test.describe.serial('Sindomon E2E API Flow', () => {
     expect(res.status()).toBe(200);
 
     const body = await res.json();
-    expect(body, 'login: missing jwt_token').toHaveProperty('jwt_token');
+    expect(body.data, 'login: missing jwt_token').toHaveProperty('jwt_token');
     assertEnvelope(body, '/auth/login');
 
-    operatorJwt = body.jwt_token;
+    operatorJwt = body.data.jwt_token;
 
     const payload = decodeJwtPayload(operatorJwt);
     expect(payload.role_id, 'JWT: role_id should be 2').toBe(2);
@@ -158,10 +158,10 @@ test('Auth: Admin login JWT verification', async ({ request }) => {
   expect(res.status()).toBe(200);
 
   const body = await res.json();
-  expect(body, 'admin login: missing jwt_token').toHaveProperty('jwt_token');
+  expect(body.data, 'admin login: missing jwt_token').toHaveProperty('jwt_token');
   assertEnvelope(body, '/auth/login (admin)');
 
-  const payload = decodeJwtPayload(body.jwt_token);
+  const payload = decodeJwtPayload(body.data.jwt_token);
   expect(payload.role_id, 'JWT admin: role_id should be 1').toBe(1);
   expect(payload, 'JWT admin: missing polda_id').toHaveProperty('polda_id');
 });

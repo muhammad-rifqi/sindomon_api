@@ -87,10 +87,5 @@ $route['api/v1/sdm/hukum']['POST'] = 'sdm/hukum_post';
 $route['api/v1/master/polres']['POST'] = 'master/polres_post';
 $route['api/v1/master/polres/(:num)']['PUT'] = 'master/polres_put/$1';
 $route['api/v1/master/polres/(:num)']['DELETE'] = 'master/polres_delete/$1';
-
-// Mock API (temporary - bypasses auth/blueprint)
-$route['api/v1/sdm']['GET'] = 'sdm_mock/index_get';
-$route['api/v1/sdm']['POST'] = 'sdm_mock/index_post';
-
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;

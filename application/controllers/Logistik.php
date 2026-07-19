@@ -216,7 +216,8 @@ class Logistik extends CI_Controller {
             $this->output->set_content_type('application/json')->set_status_header(400);
             echo json_encode(array(
                 "status" => 400,
-                "message" => "Validasi gagal. Tanggal kedaluwarsa harus lebih besar dari tanggal masuk."
+                "message" => "Validasi gagal. Tanggal kedaluwarsa harus lebih besar dari tanggal masuk.",
+                "data" => (object)[]
             ));
             return;
         }
@@ -250,7 +251,8 @@ class Logistik extends CI_Controller {
         $this->output->set_content_type('application/json')->set_status_header(201);
         echo json_encode(array(
             "status" => 201,
-            "message" => "Batch amunisi sukses terdaftar."
+            "message" => "Batch amunisi sukses terdaftar.",
+            "data" => (object)[]
         ));
     }
 
@@ -350,7 +352,7 @@ class Logistik extends CI_Controller {
         // ── 2. CONTENT TYPE GATE ──
         if (strpos($this->input->server('CONTENT_TYPE'), 'application/json') === false) {
             $this->output->set_content_type('application/json')->set_status_header(415);
-            echo json_encode(array("message" => "Content-Type must be application/json", "status" => 415));
+            echo json_encode(array("message" => "Content-Type must be application/json", "status" => 415, "data" => (object)[]));
             return;
         }
 
@@ -358,7 +360,7 @@ class Logistik extends CI_Controller {
         $input = json_decode($this->input->raw_input_stream);
         if (!$input) {
             $this->output->set_content_type('application/json')->set_status_header(400);
-            echo json_encode(array("message" => "Invalid JSON payload", "status" => 400));
+            echo json_encode(array("message" => "Invalid JSON payload", "status" => 400, "data" => (object)[]));
             return;
         }
 
@@ -374,7 +376,7 @@ class Logistik extends CI_Controller {
         // ── 5. MANDATORY PHOTO ──
         if (empty($foto_fisik)) {
             $this->output->set_content_type('application/json')->set_status_header(422);
-            echo json_encode(array("status" => 422, "message" => "Validasi gagal. Foto bukti fisik satwa wajib dilampirkan."));
+            echo json_encode(array("status" => 422, "message" => "Validasi gagal. Foto bukti fisik satwa wajib dilampirkan.", "data" => (object)[]));
             return;
         }
 
@@ -382,7 +384,7 @@ class Logistik extends CI_Controller {
         $dupe = $this->db->get_where('tbl_satwa', array('nomor_registrasi' => $nomor_registrasi))->row();
         if ($dupe) {
             $this->output->set_content_type('application/json')->set_status_header(422);
-            echo json_encode(array("status" => 422, "message" => "Nomor registrasi sudah ada di pangkalan data."));
+            echo json_encode(array("status" => 422, "message" => "Nomor registrasi sudah ada di pangkalan data.", "data" => (object)[]));
             return;
         }
 
@@ -398,7 +400,8 @@ class Logistik extends CI_Controller {
             $this->output->set_content_type('application/json')->set_status_header(500);
             echo json_encode(array(
                 "message" => "Gagal menyimpan foto: " . $result['error'],
-                "status" => 500
+                "status" => 500,
+                "data" => (object)[]
             ));
             return;
         }
@@ -422,7 +425,7 @@ class Logistik extends CI_Controller {
             $this->db->trans_rollback();
             @unlink($foto_url);
             $this->output->set_content_type('application/json')->set_status_header(500);
-            echo json_encode(array("message" => "Gagal menyimpan data satwa.", "status" => 500));
+            echo json_encode(array("message" => "Gagal menyimpan data satwa.", "status" => 500, "data" => (object)[]));
             return;
         }
 
@@ -433,7 +436,8 @@ class Logistik extends CI_Controller {
         $this->output->set_content_type('application/json')->set_status_header(201);
         echo json_encode(array(
             "status" => 201,
-            "message" => "Data satwa berhasil didaftarkan."
+            "message" => "Data satwa berhasil didaftarkan.",
+            "data" => (object)[]
         ));
     }
 }

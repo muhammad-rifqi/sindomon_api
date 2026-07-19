@@ -30,7 +30,8 @@ class Profile extends CI_Controller {
             $data = $this->db->query("select * from tbl_users where token = '".$authorization."'")->result_array();
             echo json_encode(array("message"=> "success", "status" => 200 , "data" => $data));
         }else{
-            echo json_encode("Unauthorize");
+            http_response_code(401);
+            echo json_encode(array("status" => 401, "message" => "Unauthorized", "data" => (object)[]));
         }
     }
 }
