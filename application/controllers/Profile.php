@@ -25,10 +25,15 @@ class Profile extends CI_Controller {
     public function get()
     {
         $headers = $this->input->request_headers();
-        if($headers != null){
+        if(isset($headers['Authorization'])){
             $authorization = $headers['Authorization'];
-            $data = $this->db->query("select * from tbl_users where token = '".$authorization."'")->result_array();
-            echo json_encode(array("message"=> "success", "status" => 200 , "data" => $data));
+            $payload = jwt_decode($authorization);
+            if ($payload === false) {
+                echo json_encode("Unauthorize");
+             } else {
+                $data = $this->db->query("select * from tbl_users where token = '".$payload['uid']."'")->result_array();
+                echo json_encode(array("message"=> "success", "status" => 200 , "data" => $data));
+             }
         }else{
             echo json_encode("Unauthorize");
         }
