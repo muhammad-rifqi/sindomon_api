@@ -29,7 +29,7 @@ class Kamtibmas extends CI_Controller {
      * POST /api/v1/kamtibmas/laporan
      * Input Laporan SITKAMTIBMAS [JSON + Base64]
      *
-     * Authorization: Operator Polda (role_id=3)
+     * Authorization: Operator Polda (role_id=2)
      * Content-Type: application/json
      *
      * JSON fields:
@@ -51,9 +51,9 @@ class Kamtibmas extends CI_Controller {
             return;
         }
 
-        // ── 2. ROLE CHECK: Operator Polda only (role_id == 3) ──
+        // ── 2. ROLE CHECK: Operator Polda only (role_id = 2) ──
         $role_id = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
-        if ($role_id !== 3) {
+        if ($role_id !== 2) {
             $this->output->set_status_header(403);
             echo json_encode(array(
                 "message" => "Akses ditolak. Hanya Operator Polda yang dapat mengirim laporan",

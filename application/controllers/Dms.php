@@ -29,7 +29,7 @@ class Dms extends CI_Controller {
      * POST /api/v1/dms/surat
      * Kirim Surat Dinas Baru [JSON + Base64]
      *
-     * Authorization: Super Admin (role_id=2) or Operator Polda (role_id=3)
+     * Authorization: Super Admin (role_id=1) or Operator Polda (role_id=2)
      * Content-Type: application/json
      *
      * JSON fields:
@@ -52,9 +52,9 @@ class Dms extends CI_Controller {
             return;
         }
 
-        // ── 2. ROLE CHECK: Super Admin (2) or Operator Polda (3) ──
+        // ── 2. ROLE CHECK: Super Admin (1) or Operator Polda (2) ──
         $role_id = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
-        if ($role_id != 2 && $role_id != 3) {
+        if ($role_id != 1 && $role_id != 2) {
             $this->output->set_status_header(403);
             echo json_encode(array(
                 "message" => "Akses ditolak. Hanya Super Admin atau Operator Polda yang dapat mengirim surat",
@@ -186,7 +186,7 @@ class Dms extends CI_Controller {
      * GET /api/v1/dms/surat?tipe=inbox|outbox
      * Tarik Kotak Masuk (Inbox) & Kotak Keluar (Outbox)
      *
-     * Authorization: Eksekutif (role_id=2) or Operator Polda (role_id=3)
+     * Authorization: Operator Polda (role_id=2) or Eksekutif (role_id=3)
      * Query params:
      *   - tipe  (string, required) — "inbox" or "outbox"
      */
@@ -204,7 +204,7 @@ class Dms extends CI_Controller {
             return;
         }
 
-        // ── 2. ROLE CHECK: Eksekutif (2) or Operator Polda (3) ──
+        // ── 2. ROLE CHECK: Operator Polda (2) or Eksekutif (3) ──
         $role_id = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
         if ($role_id != 2 && $role_id != 3) {
             $this->output->set_status_header(403);

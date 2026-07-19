@@ -30,7 +30,7 @@ class Pengaduan extends CI_Controller {
      */
     /**
      * GET /api/v1/pengaduan/tiket
-     * Tarik daftar hub pengaduan terpadu (Operator Polda + Eksekutif)
+     * Tarik daftar hub pengaduan terpadu (Operator Polda role_id=2 + Eksekutif role_id=3)
      * Query params (all optional): status, sumber, polda_id
      */
     public function tiket()
@@ -43,9 +43,9 @@ class Pengaduan extends CI_Controller {
             return;
         }
 
-        // ── 2. ROLE CHECK: Operator Polda (3) or Eksekutif (2) ──
+        // ── 2. ROLE CHECK: Operator Polda (2) or Eksekutif (3) ──
         $role_id = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
-        if ($role_id != 3 && $role_id != 2) {
+        if ($role_id != 2 && $role_id != 3) {
             $this->output->set_status_header(403);
             echo json_encode(array("message" => "Anda tidak memiliki akses", "status" => 403, "data" => array()));
             return;
@@ -60,14 +60,14 @@ class Pengaduan extends CI_Controller {
         $where = array();
         $force_open = false;
 
-        if ($role_id == 3) {
+        if ($role_id == 2) {
             // OPERATOR POLDA: Ignore polda_id from query, force JWT polda_id
             $jwt_polda_id = isset($payload['polda_id']) ? $payload['polda_id'] : null;
             if ($jwt_polda_id !== null) {
                 $where[] = "polda_id = '" . $this->db->escape_str($jwt_polda_id) . "'";
             }
         } else {
-            // EKSEKUTIF: Use polda_id from query if provided
+            // EKSEKUTIF (role_id=3): Use polda_id from query if provided
             if ($polda_id_param !== null && $polda_id_param !== '') {
                 $where[] = "polda_id = '" . $this->db->escape_str((int) $polda_id_param) . "'";
                 $force_open = true;
@@ -125,8 +125,8 @@ class Pengaduan extends CI_Controller {
             return;
         }
 
-        // ── 2. ROLE CHECK: Operator Polda only (role_id = 3) ──
-        if (!isset($payload['role_id']) || $payload['role_id'] != 3) {
+        // ── 2. ROLE CHECK: Operator Polda only (role_id = 2) ──
+        if (!isset($payload['role_id']) || $payload['role_id'] != 2) {
             $this->output->set_status_header(403);
             echo json_encode(array("message" => "Anda tidak memiliki akses", "status" => 403, "data" => array()));
             return;

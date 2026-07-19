@@ -21,9 +21,10 @@ class Auth extends CI_Controller {
             if($sql->num_rows() > 0){
                 $check = $sql->result_array();
                 $payload = [
-                                'uid' => $check[0]['id'],
+                                'uid' => (int) $check[0]['id'],
                                 'username' => $check[0]['username'],
-                                'role' => $check[0]['roles_id'],
+                                'role_id' => (int) $check[0]['roles_id'],
+                                'polda_id' => isset($check[0]['polda_id']) ? (int) $check[0]['polda_id'] : 0,
                                 'iat' => time(),
                                 'exp' => time() + 3600
                             ];

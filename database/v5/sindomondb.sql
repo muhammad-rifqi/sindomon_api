@@ -114,9 +114,9 @@ CREATE TABLE `tbl_role` (
 --
 
 INSERT INTO `tbl_role` (`id`, `roles`, `created_at`) VALUES
-(1, 'Administrator', '2026-07-11 00:00:00'),
-(2, 'Superadmin', '2026-07-12 00:00:00'),
-(3, 'Operator Polda', '2026-07-14 11:25:28');
+(1, 'Super Admin', '2026-07-11 00:00:00'),
+(2, 'Operator Polda', '2026-07-12 00:00:00'),
+(3, 'Eksekutif', '2026-07-14 11:25:28');
 
 -- --------------------------------------------------------
 
@@ -129,6 +129,7 @@ CREATE TABLE `tbl_users` (
   `username` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `roles_id` int(11) DEFAULT NULL,
+  `polda_id` int(11) DEFAULT NULL,
   `uuid` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `token` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `expired` varchar(50) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -147,6 +148,25 @@ INSERT INTO `tbl_users` (`id`, `username`, `password`, `roles_id`, `uuid`, `toke
 --
 
 --
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tbl_proses_hukum`
+--
+
+CREATE TABLE `tbl_proses_hukum` (
+  `hukum_id` int(11) NOT NULL AUTO_INCREMENT,
+  `personil_id` varchar(36) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `klasifikasi` enum('Pemeriksaan Propam','Sidang Kode Etik','Sidang Disiplin','Pidana Umum') COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status_hukum` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `tanggal_mulai` date NOT NULL,
+  `deskripsi_kasus` text COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`hukum_id`),
+  KEY `idx_personil_id` (`personil_id`),
+  CONSTRAINT `fk_proses_hukum_personil` FOREIGN KEY (`personil_id`) REFERENCES `tbl_personil` (`personil_id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Indexes for table `tbl_dokumen_hukum`
 --
 ALTER TABLE `tbl_dokumen_hukum`
@@ -181,7 +201,8 @@ ALTER TABLE `tbl_role`
 -- Indexes for table `tbl_users`
 --
 ALTER TABLE `tbl_users`
-  ADD PRIMARY KEY (`id`);
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_polda_id` (`polda_id`);
 
 --
 -- AUTO_INCREMENT for dumped tables

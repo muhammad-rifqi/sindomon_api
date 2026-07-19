@@ -80,6 +80,9 @@ $route['api/v1/logistik/satwa']['POST'] = 'logistik/satwa_post';
 // SDM
 $route['api/v1/sdm/org-tree']['GET'] = 'sdm/org_tree_get';
 $route['api/v1/sdm/personil']['GET'] = 'sdm/personil_get';
+$route['api/v1/sdm/personil']['POST'] = 'sdm/personil_post';
+$route['api/v1/sdm/personil/(:any)']['PUT'] = 'sdm/personil_put/$1';
+$route['api/v1/sdm/hukum']['POST'] = 'sdm/hukum_post';
 
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;

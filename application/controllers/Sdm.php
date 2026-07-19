@@ -18,6 +18,7 @@ class Sdm extends CI_Controller {
 
         $this->load->helper('url');
         $this->load->helper('jwt');
+        $this->load->helper('uuid');
         $this->load->library('jwt');
     }
 
@@ -227,6 +228,346 @@ class Sdm extends CI_Controller {
             "message" => "Daftar personel berhasil dimuat.",
             "status" => 200,
             "data" => $rows
+        ));
+    }
+
+    /**
+     * POST /api/v1/sdm/personil
+     * Tambah Personel Baru
+     *
+     * Auth: role_id=2 (Operator Polda) only. polda_id auto-injected from JWT.
+     */
+    public function personil_post()
+    {
+        $payload = get_jwt_payload($this);
+        if (!$payload) {
+            $this->output->set_status_header(401);
+            echo json_encode(array(
+                "message" => "Token tidak ditemukan",
+                "status" => 401,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $role_id = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
+        if ($role_id != 2) {
+            $this->output->set_status_header(403);
+            echo json_encode(array(
+                "message" => "Akses ditolak",
+                "status" => 403,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $jwt_polda_id = isset($payload['polda_id']) ? (int) $payload['polda_id'] : 0;
+
+        $input = json_decode($this->input->raw_input_stream, true);
+        if (!$input) {
+            $this->output->set_status_header(400);
+            echo json_encode(array(
+                "message" => "Format JSON tidak valid",
+                "status" => 400,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $nrp          = trim($input['nrp'] ?? '');
+        $nama_lengkap = trim($input['nama_lengkap'] ?? '');
+        $pangkat_id   = (int) ($input['pangkat_id'] ?? 0);
+        $jabatan_id   = (int) ($input['jabatan_id'] ?? 0);
+        $status_aktif = trim($input['status_aktif'] ?? 'Aktif') ?: 'Aktif';
+        $polres_id    = $input['polres_id'] ?? null;
+
+        if ($nrp === '' || $nama_lengkap === '' || $pangkat_id === 0 || $jabatan_id === 0) {
+            $this->output->set_status_header(422);
+            echo json_encode(array(
+                "message" => "Data tidak lengkap. nrp, nama_lengkap, pangkat_id, jabatan_id wajib diisi.",
+                "status" => 422,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $existing = $this->db->query(
+            "SELECT personil_id FROM tbl_personil WHERE nrp = " . $this->db->escape($nrp)
+        );
+        if ($existing->num_rows() > 0) {
+            $this->output->set_status_header(422);
+            echo json_encode(array(
+                "status" => 422,
+                "message" => "Pendaftaran gagal. NRP sudah terdaftar di sistem.",
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        if ($polres_id === '' || $polres_id === '0' || $polres_id === 0 || $polres_id === null) {
+            $polres_id = null;
+        } else {
+            $polres_id = (int) $polres_id;
+        }
+
+        $personil_id = generate_uuid4();
+
+        $sql = "INSERT INTO tbl_personil (personil_id, nrp, nama_lengkap, pangkat_id, jabatan_id, status_aktif, polda_id, polres_id) "
+             . "VALUES ("
+             . "'" . $this->db->escape_str($personil_id) . "', "
+             . "'" . $this->db->escape_str($nrp) . "', "
+             . "'" . $this->db->escape_str($nama_lengkap) . "', "
+             . "'" . $this->db->escape_str($pangkat_id) . "', "
+             . "'" . $this->db->escape_str($jabatan_id) . "', "
+             . "'" . $this->db->escape_str($status_aktif) . "', "
+             . "'" . $this->db->escape_str($jwt_polda_id) . "', "
+             . ($polres_id === null ? "NULL" : "'" . $this->db->escape_str($polres_id) . "'")
+             . ")";
+
+        $insert = $this->db->query($sql);
+
+        if (!$insert) {
+            $this->output->set_status_header(500);
+            echo json_encode(array(
+                "message" => "Gagal menyimpan data personel",
+                "status" => 500,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $this->output->set_status_header(201);
+        echo json_encode(array(
+            "status" => 201,
+            "message" => "Personel berhasil didaftarkan.",
+            "data" => array(
+                "personil_id" => $personil_id
+            )
+        ));
+    }
+
+    /**
+     * PUT /api/v1/sdm/personil/(:any)
+     * Edit / Mutasi Personel
+     *
+     * Auth: role_id=2 (Operator Polda) only.
+     * Jurisdiction: UPDATE locked to JWT polda_id.
+     */
+    public function personil_put($personil_id)
+    {
+        $payload = get_jwt_payload($this);
+        if (!$payload) {
+            $this->output->set_status_header(401);
+            echo json_encode(array(
+                "message" => "Token tidak ditemukan",
+                "status" => 401,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $role_id = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
+        if ($role_id != 2) {
+            $this->output->set_status_header(403);
+            echo json_encode(array(
+                "message" => "Akses ditolak",
+                "status" => 403,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $jwt_polda_id = isset($payload['polda_id']) ? (int) $payload['polda_id'] : 0;
+
+        $input = json_decode($this->input->raw_input_stream, true);
+        if (!$input) {
+            $this->output->set_status_header(400);
+            echo json_encode(array(
+                "message" => "Format JSON tidak valid",
+                "status" => 400,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $nrp          = trim($input['nrp'] ?? '');
+        $nama_lengkap = trim($input['nama_lengkap'] ?? '');
+        $pangkat_id   = (int) ($input['pangkat_id'] ?? 0);
+        $jabatan_id   = (int) ($input['jabatan_id'] ?? 0);
+        $status_aktif = trim($input['status_aktif'] ?? 'Aktif') ?: 'Aktif';
+        $polres_id    = $input['polres_id'] ?? null;
+
+        if ($nrp === '' || $nama_lengkap === '' || $pangkat_id === 0 || $jabatan_id === 0) {
+            $this->output->set_status_header(422);
+            echo json_encode(array(
+                "message" => "Data tidak lengkap. nrp, nama_lengkap, pangkat_id, jabatan_id wajib diisi.",
+                "status" => 422,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $existing = $this->db->query(
+            "SELECT personil_id FROM tbl_personil WHERE nrp = " . $this->db->escape($nrp)
+            . " AND personil_id != " . $this->db->escape($personil_id)
+        );
+        if ($existing->num_rows() > 0) {
+            $this->output->set_status_header(422);
+            echo json_encode(array(
+                "status" => 422,
+                "message" => "Pendaftaran gagal. NRP sudah terdaftar di sistem.",
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        if ($polres_id === '' || $polres_id === '0' || $polres_id === 0 || $polres_id === null) {
+            $polres_id = null;
+        } else {
+            $polres_id = (int) $polres_id;
+        }
+
+        $sql = "UPDATE tbl_personil SET "
+             . "nrp = '" . $this->db->escape_str($nrp) . "', "
+             . "nama_lengkap = '" . $this->db->escape_str($nama_lengkap) . "', "
+             . "pangkat_id = '" . $this->db->escape_str($pangkat_id) . "', "
+             . "jabatan_id = '" . $this->db->escape_str($jabatan_id) . "', "
+             . "status_aktif = '" . $this->db->escape_str($status_aktif) . "', "
+             . "polres_id = " . ($polres_id === null ? "NULL" : "'" . $this->db->escape_str($polres_id) . "'") . " "
+             . "WHERE personil_id = '" . $this->db->escape_str($personil_id) . "' "
+             . "AND polda_id = '" . $this->db->escape_str($jwt_polda_id) . "'";
+
+        $this->db->query($sql);
+
+        if ($this->db->affected_rows() === 0) {
+            $this->output->set_status_header(404);
+            echo json_encode(array(
+                "message" => "Personel tidak ditemukan.",
+                "status" => 404,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $this->output->set_status_header(200);
+        echo json_encode(array(
+            "status" => 200,
+            "message" => "Data personel berhasil diperbarui.",
+            "data" => new stdClass()
+        ));
+    }
+
+    /**
+     * POST /api/v1/sdm/hukum
+     * Catat Riwayat Proses Hukum Personel
+     *
+     * Auth: Operator Polda (role_id=2) only.
+     * Jurisdiction: personil_id must belong to JWT polda_id.
+     */
+    public function hukum_post()
+    {
+        $payload = get_jwt_payload($this);
+        if (!$payload) {
+            $this->output->set_status_header(401);
+            echo json_encode(array(
+                "message" => "Token tidak ditemukan",
+                "status" => 401,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $role_id = isset($payload['role_id']) ? (int) $payload['role_id'] : 0;
+        if ($role_id != 2) {
+            $this->output->set_status_header(403);
+            echo json_encode(array(
+                "message" => "Akses ditolak",
+                "status" => 403,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $jwt_polda_id = isset($payload['polda_id']) ? (int) $payload['polda_id'] : 0;
+
+        $input = json_decode($this->input->raw_input_stream, true);
+        if (!$input) {
+            $this->output->set_status_header(400);
+            echo json_encode(array(
+                "message" => "Format JSON tidak valid",
+                "status" => 400,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $personil_id    = trim($input['personil_id'] ?? '');
+        $klasifikasi    = trim($input['klasifikasi'] ?? '');
+        $status_hukum   = trim($input['status_hukum'] ?? '');
+        $tanggal_mulai  = trim($input['tanggal_mulai'] ?? '');
+        $deskripsi_kasus = trim($input['deskripsi_kasus'] ?? '');
+
+        if ($personil_id === '' || $klasifikasi === '' || $status_hukum === '' || $tanggal_mulai === '') {
+            $this->output->set_status_header(422);
+            echo json_encode(array(
+                "message" => "Data tidak lengkap. personil_id, klasifikasi, status_hukum, tanggal_mulai wajib diisi.",
+                "status" => 422,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $valid_klasifikasi = array('Pemeriksaan Propam', 'Sidang Kode Etik', 'Sidang Disiplin', 'Pidana Umum');
+        if (!in_array($klasifikasi, $valid_klasifikasi, true)) {
+            $this->output->set_status_header(400);
+            echo json_encode(array(
+                "message" => "Klasifikasi tidak valid. Gunakan: Pemeriksaan Propam, Sidang Kode Etik, Sidang Disiplin, atau Pidana Umum.",
+                "status" => 400,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $personil = $this->db->query(
+            "SELECT polda_id FROM tbl_personil WHERE personil_id = " . $this->db->escape($personil_id)
+        )->row_array();
+
+        if (!$personil || (int) $personil['polda_id'] !== $jwt_polda_id) {
+            $this->output->set_status_header(403);
+            echo json_encode(array(
+                "message" => "Akses ditolak. Personel tidak ditemukan atau berada di luar yurisdiksi Anda.",
+                "status" => 403,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $sql = "INSERT INTO tbl_proses_hukum (personil_id, klasifikasi, status_hukum, tanggal_mulai, deskripsi_kasus) "
+             . "VALUES ("
+             . "'" . $this->db->escape_str($personil_id) . "', "
+             . "'" . $this->db->escape_str($klasifikasi) . "', "
+             . "'" . $this->db->escape_str($status_hukum) . "', "
+             . "'" . $this->db->escape_str($tanggal_mulai) . "', "
+             . ($deskripsi_kasus !== '' ? "'" . $this->db->escape_str($deskripsi_kasus) . "'" : "NULL")
+             . ")";
+
+        $insert = $this->db->query($sql);
+
+        if (!$insert) {
+            $this->output->set_status_header(500);
+            echo json_encode(array(
+                "message" => "Gagal menyimpan catatan hukum",
+                "status" => 500,
+                "data" => new stdClass()
+            ));
+            return;
+        }
+
+        $this->output->set_status_header(201);
+        echo json_encode(array(
+            "status" => 201,
+            "message" => "Catatan hukum berhasil ditambahkan.",
+            "data" => new stdClass()
         ));
     }
 
