@@ -83,6 +83,8 @@ $route['api/v1/sdm/personil']['GET'] = 'sdm/personil_get';
 $route['api/v1/sdm/personil']['POST'] = 'sdm/personil_post';
 $route['api/v1/sdm/personil/(:any)']['PUT'] = 'sdm/personil_put/$1';
 $route['api/v1/sdm/hukum']['POST'] = 'sdm/hukum_post';
+// Master
+$route['api/v1/master/polres']['POST'] = 'master/polres_post';
 
 $route['404_override'] = '';
 $route['translate_uri_dashes'] = FALSE;
