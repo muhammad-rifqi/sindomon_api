@@ -164,4 +164,39 @@ class Master extends CI_Controller {
             'data' => (object)[]
         ]);
     }
+
+    public function wilayah_get()
+    {
+        $payload = get_jwt_payload($this);
+        if ($payload === null) {
+            http_response_code(401);
+            echo json_encode([
+                'status' => 401,
+                'message' => 'Token tidak ditemukan atau tidak valid.',
+                'data' => (object)[]
+            ]);
+            return;
+        }
+
+        $poldas = $this->db->get('tbl_polda')->result_array();
+        $rows = array();
+        foreach ($poldas as $p) {
+            $polres = $this->db->get_where('tbl_polres', ['polda_id' => $p['id']])->result_array();
+            $rows[] = array(
+                'id'             => (int) $p['id'],
+                'nama_polda'     => $p['nama_polda'],
+                'latitude'       => $p['latitude'],
+                'longitude'      => $p['longitude'],
+                'created_at'     => $p['created_at'],
+                'polres_jajaran' => $polres,
+            );
+        }
+
+        http_response_code(200);
+        echo json_encode([
+            'status' => 200,
+            'message' => 'Daftar wilayah berhasil dimuat.',
+            'data' => $rows
+        ]);
+    }
 }
