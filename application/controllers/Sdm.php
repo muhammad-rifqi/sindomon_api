@@ -33,7 +33,7 @@ class Sdm extends CI_Controller {
     public function org_tree_get()
     {
         // ── 1. AUTH ──
-        $payload = get_jwt_payload($this);
+        $payload = $this->_extract_jwt_payload();
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array(
@@ -125,7 +125,7 @@ class Sdm extends CI_Controller {
     public function personil_get()
     {
         // ── 1. AUTH ──
-        $payload = get_jwt_payload($this);
+        $payload = $this->_extract_jwt_payload();
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array(
@@ -239,7 +239,7 @@ class Sdm extends CI_Controller {
      */
     public function personil_post()
     {
-        $payload = get_jwt_payload($this);
+        $payload = $this->_extract_jwt_payload();
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array(
@@ -355,7 +355,7 @@ class Sdm extends CI_Controller {
      */
     public function personil_put($personil_id)
     {
-        $payload = get_jwt_payload($this);
+        $payload = $this->_extract_jwt_payload();
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array(
@@ -466,7 +466,7 @@ class Sdm extends CI_Controller {
      */
     public function hukum_post()
     {
-        $payload = get_jwt_payload($this);
+        $payload = $this->_extract_jwt_payload();
         if (!$payload) {
             $this->output->set_status_header(401);
             echo json_encode(array(
@@ -578,6 +578,30 @@ class Sdm extends CI_Controller {
      * @param int|null $parent_id
      * @return array
      */
+    /**
+     * Fallback JWT extraction — used if jwt_helper::get_jwt_payload()
+     * is unavailable (cascade from helper loading order).
+     */
+    private function _extract_jwt_payload()
+    {
+        $auth = null;
+        $all_headers = function_exists('getallheaders') ? getallheaders() : [];
+        if (isset($all_headers['Authorization'])) {
+            $auth = $all_headers['Authorization'];
+        } elseif (isset($_SERVER['HTTP_AUTHORIZATION'])) {
+            $auth = $_SERVER['HTTP_AUTHORIZATION'];
+        } elseif (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION'])) {
+            $auth = $_SERVER['REDIRECT_HTTP_AUTHORIZATION'];
+        }
+        if ($auth === null) {
+            return null;
+        }
+        if (substr($auth, 0, 7) === 'Bearer ') {
+            $auth = substr($auth, 7);
+        }
+        return $this->jwt->decode($auth) ?: null;
+    }
+
     private function _build_tree($items, $parent_id)
     {
         $branch = array();
